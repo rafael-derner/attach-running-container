@@ -1,0 +1,46 @@
+#compdef arc
+
+_arc() {
+  _arguments \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '(-l --list)'{-l,--list}'[List all containers]' \
+    '1: :_arc_containers' \
+    '2: :_arc_paths'
+}
+
+_arc_containers() {
+  local containers
+  containers=($(docker ps --all --format "{{.Names}}" 2>/dev/null))
+  _describe 'container' containers
+}
+
+_arc_paths() {
+  local container="$words[2]"
+  local workdir paths container_status
+
+  container_status=$(docker inspect --format '{{.State.Status}}' "$container" 2>/dev/null)
+  workdir=$(docker inspect --format '{{.Config.WorkingDir}}' "$container" 2>/dev/null)
+
+  if [[ "$container_status" == "running" ]]; then
+    paths=($(docker exec "$container" bash -c '
+      workdir="$1"
+      result=()
+      if [ -n "$workdir" ] && [ -d "$workdir" ]; then
+        result+=("$workdir")
+        while IFS= read -r d; do result+=("$d"); done < <(find "$workdir" -maxdepth 2 -type d 2>/dev/null)
+      fi
+      for d in /app /workspace /workspaces /home /root /srv /opt; do
+        [ -d "$d" ] && result+=("$d")
+      done
+      printf "%s\n" "${result[@]}" | sort -u
+    ' -- "$workdir" 2>/dev/null))
+  else
+    paths=()
+    [[ -n "$workdir" ]] && paths+=("$workdir")
+    paths+=(/app /workspace /workspaces /home /root /srv /opt)
+  fi
+
+  _describe 'path' paths
+}
+
+_arc "$@"

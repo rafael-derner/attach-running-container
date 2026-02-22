@@ -1,20 +1,19 @@
 #compdef arc
 
-_arc() {
+_arc_zsh_completion() {
   _arguments \
     '(-h --help)'{-h,--help}'[Show help]' \
-    '(-l --list)'{-l,--list}'[List all containers]' \
-    '1: :_arc_containers' \
-    '2: :_arc_paths'
+    '1: :_arc_zsh_completion_containers' \
+    '2: :_arc_zsh_completion_paths'
 }
 
-_arc_containers() {
+_arc_zsh_completion_containers() {
   local containers
   containers=($(docker ps --all --format "{{.Names}}" 2>/dev/null))
   _describe 'container' containers
 }
 
-_arc_paths() {
+_arc_zsh_completion_paths() {
   local container="$words[2]"
   local workdir paths container_status
 

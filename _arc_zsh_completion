@@ -1,10 +1,44 @@
 #compdef arc
 
 _arc_zsh_completion() {
+  local state
+
   _arguments \
     '(-h --help)'{-h,--help}'[Show help]' \
+    '1: :_arc_zsh_completion_subcommands' \
+    '*:: :->subcommand_args'
+
+  case "$state" in
+    subcommand_args)
+      case "$words[1]" in
+        open)  _arc_zsh_completion_open  ;;
+        build) _arc_zsh_completion_build ;;
+      esac
+      ;;
+  esac
+}
+
+_arc_zsh_completion_subcommands() {
+  local subcommands
+  subcommands=(
+    'open:Attach Cursor to an already running (or stopped) container'
+    'build:Provision and open a container from a devcontainer.json'
+  )
+  _describe 'subcommand' subcommands
+}
+
+# Completion for: arc open <container> [path]
+_arc_zsh_completion_open() {
+  _arguments \
     '1: :_arc_zsh_completion_containers' \
-    '2: :_arc_zsh_completion_paths'
+    '2: :_arc_zsh_completion_container_paths'
+}
+
+# Completion for: arc build <workspace-path> [path]
+_arc_zsh_completion_build() {
+  _arguments \
+    '1: :_arc_zsh_completion_workspace_paths' \
+    '2: :_arc_zsh_completion_container_paths'
 }
 
 _arc_zsh_completion_containers() {
@@ -13,7 +47,11 @@ _arc_zsh_completion_containers() {
   _describe 'container' containers
 }
 
-_arc_zsh_completion_paths() {
+_arc_zsh_completion_workspace_paths() {
+  _path_files -/
+}
+
+_arc_zsh_completion_container_paths() {
   local container="$words[2]"
   local workdir paths container_status
 
@@ -42,4 +80,4 @@ _arc_zsh_completion_paths() {
   _describe 'path' paths
 }
 
-_arc "$@"
+_arc_zsh_completion "$@"
